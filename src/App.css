@@ -4,3 +4,17 @@
     text-align: center;
     width: 100%;
 }
+
+table {
+    margin-top: 40px;
+}
+
+table,
+th,
+td {
+    height: auto;
+}
+
+img {
+    width: 50px;
+}
