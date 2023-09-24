@@ -1,35 +1,47 @@
 import './App.css'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { UsersList } from './components/UsersList'
-import { User } from './types'
+import { SortBy, User } from './types.d'
 
 function App() {
     const [users, setUsers] = useState<User[]>([])
     const [showColors, setShowColors] = useState<boolean>(false)
-    const [sortByCountry, setSortByCountry] = useState<boolean>(false)
+    const [sorting, setSorting] = useState<SortBy>(SortBy.NONE)
     const [filterByCountry, setFilterByCountry] = useState<string | null>(null)
     const initialUsers = useRef<User[]>([])
 
     const toggleColors = () => setShowColors(!showColors)
-    const toggleSortByCountry = () => setSortByCountry(!sortByCountry)
+    const toggleSortByCountry = () => {
+        const newSortingValue = sorting === SortBy.NONE ? SortBy.COUNTRY : SortBy.NONE
+        setSorting(newSortingValue)
+    }
+
     const handleFilterByCountry = (event: React.ChangeEvent<HTMLInputElement>) => setFilterByCountry(event.target.value)
 
     const handleDeleteRow = (email: string) => setUsers(users.filter((user) => user.email !== email))
+
+    const handleSortByColumn = (column: SortBy) => setSorting(column)
 
     const handleResetUsers = () => {
         setUsers(initialUsers.current)
     }
 
-    const filteredUsers =
-        typeof filterByCountry === 'string' && filterByCountry.length > 0
+    const filteredUsers = useMemo(() => {
+        return typeof filterByCountry === 'string' && filterByCountry.length > 0
             ? users.filter((user) => user.location.country.toLowerCase().includes(filterByCountry.toLowerCase()))
             : users
+    }, [users, filterByCountry])
 
-    const sortUsers = sortByCountry
-        ? filteredUsers.toSorted((a, b) => a.location.country.localeCompare(b.location.country))
-        : filteredUsers
+    const sortedUsers = useMemo(() => {
+        if (sorting === SortBy.NONE) return filteredUsers
+        if (sorting === SortBy.COUNTRY)
+            return filteredUsers.sort((a, b) => a.location.country.localeCompare(b.location.country))
+        if (sorting === SortBy.LAST) return filteredUsers.sort((a, b) => a.name.last.localeCompare(b.name.last))
+        if (sorting === SortBy.NAME) return filteredUsers.sort((a, b) => a.name.first.localeCompare(b.name.first))
+        return filteredUsers
+    }, [filteredUsers, sorting])
 
     useEffect(() => {
         fetch('https://randomuser.me/api/?results=100')
@@ -50,13 +62,18 @@ function App() {
                 <header>
                     <button onClick={toggleColors}>{showColors ? 'Colored rows' : 'No Colored rows'}</button>
                     <button onClick={toggleSortByCountry}>
-                        {sortByCountry ? 'Sorted by Country' : 'No Sort by Country'}
+                        {sorting === SortBy.COUNTRY ? 'Sorted by Country' : 'No Sort by Country'}
                     </button>
                     <button onClick={handleResetUsers}>Restore Users</button>
                     <input onChange={handleFilterByCountry} type="text" placeholder="Filter By Country" />
                 </header>
                 <main>
-                    <UsersList users={sortUsers} showColors={showColors} onDeleteRow={handleDeleteRow} />
+                    <UsersList
+                        users={sortedUsers}
+                        showColors={showColors}
+                        onDeleteRow={handleDeleteRow}
+                        onSortColumn={handleSortByColumn}
+                    />
                 </main>
             </div>
         </>

@@ -1,19 +1,20 @@
-import { User } from '../types'
+import { SortBy, User } from '../types.d'
 
 interface UsersProps {
     users: User[]
     showColors: boolean
     onDeleteRow: (email: string) => void
+    onSortColumn: (column: SortBy) => void
 }
 
-export const UsersList = ({ users, showColors, onDeleteRow }: UsersProps) => (
+export const UsersList = ({ users, showColors, onDeleteRow, onSortColumn }: UsersProps) => (
     <table width="100%">
         <thead>
             <tr>
                 <th>Photo</th>
-                <th>Name</th>
-                <th>Last Name</th>
-                <th>Country</th>
+                <th onClick={() => onSortColumn(SortBy.NAME)}>Name</th>
+                <th onClick={() => onSortColumn(SortBy.LAST)}>Last Name</th>
+                <th onClick={() => onSortColumn(SortBy.COUNTRY)}>Country</th>
                 <th>Actions</th>
             </tr>
         </thead>
